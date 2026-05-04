@@ -2,17 +2,16 @@ import csv
 import gc
 import os
 import sys
-import time
 import tracemalloc
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Tuple
+from typing import Callable, Dict, List
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from aprori import load_dataset, get_frequent_1_itemsets, generate_candidates, apriori_optimized  # noqa: E402
+from aprori import load_dataset, apriori_original, apriori_optimized_with_stats  # noqa: E402
 from linearTable import LinearTableMiner  # noqa: E402
 
 
@@ -61,95 +60,6 @@ def measure_peak_memory(func: Callable, *args, **kwargs):
     return result, peak_mb
 
 
-def apriori_original(dataset: List[set], min_sup: float):
-    start_time = time.time()
-    n_transactions = len(dataset)
-    frequent_itemsets = {}
-    candidate_count = 0
-
-    current_frequent = get_frequent_1_itemsets(dataset, min_sup)
-    frequent_itemsets.update(current_frequent)
-
-    k = 2
-    prev_frequent_keys = list(current_frequent.keys())
-    while prev_frequent_keys:
-        candidates = set()
-        for i in range(len(prev_frequent_keys)):
-            for j in range(i + 1, len(prev_frequent_keys)):
-                left = sorted(prev_frequent_keys[i])
-                right = sorted(prev_frequent_keys[j])
-                if left[: k - 2] == right[: k - 2]:
-                    candidates.add(prev_frequent_keys[i] | prev_frequent_keys[j])
-
-        if not candidates:
-            break
-
-        candidate_count += len(candidates)
-        candidate_support = {candidate: 0 for candidate in candidates}
-        for transaction in dataset:
-            for candidate in candidates:
-                if candidate.issubset(transaction):
-                    candidate_support[candidate] += 1
-
-        current_frequent = {
-            candidate: support
-            for candidate, support in candidate_support.items()
-            if support / n_transactions >= min_sup
-        }
-
-        if not current_frequent:
-            break
-
-        frequent_itemsets.update(current_frequent)
-        prev_frequent_keys = list(current_frequent.keys())
-        k += 1
-
-    execution_time = time.time() - start_time
-    return frequent_itemsets, execution_time, candidate_count
-
-
-def apriori_optimized_with_candidates(dataset: List[set], min_sup: float):
-    start_time = time.time()
-    n_initial = len(dataset)
-
-    current_frequent_dict = get_frequent_1_itemsets(dataset, min_sup)
-    all_frequent = dict(current_frequent_dict)
-    frequent_items_flat = set().union(*current_frequent_dict.keys()) if current_frequent_dict else set()
-
-    candidate_count = 0
-    k = 2
-    while current_frequent_dict:
-        candidates = generate_candidates(current_frequent_dict.keys(), k)
-        if not candidates:
-            break
-
-        candidate_count += len(candidates)
-        candidate_counts = {can: 0 for can in candidates}
-
-        new_dataset = []
-        for transaction in dataset:
-            filtered_tx = transaction.intersection(frequent_items_flat)
-            if len(filtered_tx) >= k:
-                new_dataset.append(filtered_tx)
-                for can in candidates:
-                    if can.issubset(filtered_tx):
-                        candidate_counts[can] += 1
-
-        dataset = new_dataset
-        current_frequent_dict = {
-            can: count for can, count in candidate_counts.items() if (count / n_initial) >= min_sup
-        }
-
-        if current_frequent_dict:
-            all_frequent.update(current_frequent_dict)
-            frequent_items_flat = set().union(*current_frequent_dict.keys())
-
-        k += 1
-
-    execution_time = time.time() - start_time
-    return all_frequent, execution_time, candidate_count
-
-
 def linear_table_run(dataset: List[set], min_sup: float):
     miner = LinearTableMiner(min_sup)
     frequent_itemsets, execution_time = miner.mine(dataset)
@@ -159,7 +69,7 @@ def linear_table_run(dataset: List[set], min_sup: float):
 def run_with_metrics(method_name: str, runner: Callable, dataset: List[set], min_sup: float):
     gc.collect()
     (result, peak_mb) = measure_peak_memory(runner, dataset, min_sup)
-    if method_name == "linear_table":
+    if method_name in {"linear_table", "linear_table_sota"}:
         frequent_itemsets, execution_time = result
         candidate_count = "NA"
     else:
@@ -192,21 +102,27 @@ def main():
     results = []
 
     for dataset_name, dataset_path in DATASETS.items():
+        print(f"Loading {dataset_name} from {dataset_path.name}...", flush=True)
         dataset = load_dataset(str(dataset_path))
+        print(f"Loaded {dataset_name} with {len(dataset)} transactions.", flush=True)
         for min_sup in MIN_SUPS[dataset_name]:
+            print(f"Running benchmarks for {dataset_name} at min_sup={min_sup}...", flush=True)
             per_run = {
                 "original_apriori": [],
                 "optimized_apriori": [],
                 "linear_table_sota": [],
             }
 
-            for _ in range(REPEATS):
+            for repeat_idx in range(REPEATS):
+                print(f"  Repeat {repeat_idx + 1}/{REPEATS}: original_apriori", flush=True)
                 per_run["original_apriori"].append(
                     run_with_metrics("original_apriori", apriori_original, dataset, min_sup)
                 )
+                print(f"  Repeat {repeat_idx + 1}/{REPEATS}: optimized_apriori", flush=True)
                 per_run["optimized_apriori"].append(
-                    run_with_metrics("optimized_apriori", apriori_optimized_with_candidates, dataset, min_sup)
+                    run_with_metrics("optimized_apriori", apriori_optimized_with_stats, dataset, min_sup)
                 )
+                print(f"  Repeat {repeat_idx + 1}/{REPEATS}: linear_table_sota", flush=True)
                 per_run["linear_table_sota"].append(
                     run_with_metrics("linear_table_sota", linear_table_run, dataset, min_sup)
                 )
@@ -217,6 +133,13 @@ def main():
                 summary["min_sup"] = min_sup
                 summary["algorithm"] = algorithm_name
                 results.append(summary)
+                print(
+                    f"  Saved average for {algorithm_name}: "
+                    f"time={summary['average_time']:.4f}s, "
+                    f"RAM={summary['peak_ram_mb']:.2f}MB, "
+                    f"itemsets={summary['frequent_itemsets']}",
+                    flush=True,
+                )
 
     with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as csv_file:
         writer = csv.DictWriter(
