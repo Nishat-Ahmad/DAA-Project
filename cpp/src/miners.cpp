@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <iterator>
-#include <numeric>
-#include <sstream>
-#include <stdexcept>
 #include <thread>
 #include <unordered_set>
 
@@ -124,18 +121,18 @@ std::vector<int> count_supports_parallel(const Dataset& dataset, const std::vect
             break;
         }
 
-        pool.emplace_back([&, thread_index, begin, end]() {
-            auto& local = local_counts[thread_index];
-            for (std::size_t row_index = begin; row_index < end; ++row_index) {
-                const auto& transaction = dataset[row_index];
-                for (std::size_t candidate_index = 0; candidate_index < candidates.size(); ++candidate_index) {
-                    if (std::includes(transaction.begin(), transaction.end(),
-                                      candidates[candidate_index].begin(), candidates[candidate_index].end())) {
-                        ++local[candidate_index];
+            pool.emplace_back([thread_index, begin, end, &dataset, &candidates, &local_counts]() {
+                auto& local = local_counts[thread_index];
+                for (std::size_t row_index = begin; row_index < end; ++row_index) {
+                    const auto& transaction = dataset[row_index];
+                    for (std::size_t candidate_index = 0; candidate_index < candidates.size(); ++candidate_index) {
+                        if (std::includes(transaction.begin(), transaction.end(),
+                                          candidates[candidate_index].begin(), candidates[candidate_index].end())) {
+                            ++local[candidate_index];
+                        }
                     }
                 }
-            }
-        });
+            });
     }
 
     for (auto& worker : pool) {
@@ -246,27 +243,10 @@ MiningResult apriori_original(const Dataset& dataset, double min_sup, unsigned w
 
     const std::size_t minimum_support = static_cast<std::size_t>(std::ceil(min_sup * static_cast<double>(dataset.size())));
 
-    std::vector<Itemset> current_frequents;
-    std::unordered_map<int, std::size_t> single_counts;
-    for (const auto& transaction : dataset) {
-        for (int item : transaction) {
-            ++single_counts[item];
-        }
-    }
-
-    std::vector<std::pair<int, std::size_t>> sorted_single_counts(single_counts.begin(), single_counts.end());
-    std::sort(sorted_single_counts.begin(), sorted_single_counts.end(), [](const auto& lhs, const auto& rhs) {
-        return lhs.first < rhs.first;
-    });
-
-    for (const auto& [item, count] : sorted_single_counts) {
-        if (count >= minimum_support) {
-            current_frequents.push_back(Itemset{item});
-            result.frequent_itemsets[encode_itemset(Itemset{item})] = static_cast<int>(count);
-        }
-    }
-
-    update_peak(peak_rss_mb);
+    // Compute frequent singletons using shared helper
+    MiningResult singleton_result = frequent_singletons(dataset, min_sup, peak_rss_mb);
+    result.frequent_itemsets = std::move(singleton_result.frequent_itemsets);
+    std::vector<Itemset> current_frequents = collect_itemsets_from_map(result.frequent_itemsets);
 
     std::size_t k = 2;
     while (!current_frequents.empty()) {

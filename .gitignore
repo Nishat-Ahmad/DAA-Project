@@ -3,3 +3,5 @@ cpp/build
 cpp/benchmark_output.txt
 results.csv
 Graphs
+/cpp/Dataset
+*/Dataset
