@@ -1,6 +1,8 @@
-# DAA Project
+# Performance Evaluation of Frequent Itemset Mining: Classical Apriori vs. Linear Tables
 
 This repository contains a frequent-itemset mining benchmark for the Design and Analysis of Algorithms project.
+
+This project implements and benchmarks multiple frequent-itemset mining algorithms (original Apriori, optimized Apriori, and a linear-table miner) on several datasets, measuring runtime, peak memory, candidate counts, and frequent-itemset outputs; results are saved to `cpp/results.csv` and visualized in `Graphs/`.
 
 ## What it does
 
