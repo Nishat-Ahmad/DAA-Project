@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
-namespace ccn2 {
+namespace ccbench {
 
 Dataset load_dataset(const std::filesystem::path& file_path) {
     Dataset dataset;
@@ -52,4 +52,4 @@ Dataset load_dataset(const std::filesystem::path& file_path) {
     return dataset;
 }
 
-}  // namespace ccn2
+}  // namespace ccbench

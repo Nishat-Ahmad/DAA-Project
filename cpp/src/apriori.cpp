@@ -6,7 +6,7 @@
 #include <thread>
 #include <unordered_set>
 
-namespace ccn2 {
+namespace ccbench {
 
 namespace {
 
@@ -292,4 +292,4 @@ MiningResult apriori_optimized(Dataset dataset, double min_sup, unsigned workers
     return result;
 }
 
-}  // namespace ccn2
+}  // namespace ccbench

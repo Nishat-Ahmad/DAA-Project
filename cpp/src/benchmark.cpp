@@ -18,7 +18,7 @@
 #include <psapi.h>
 #endif
 
-namespace ccn2 {
+namespace ccbench {
 
 double current_rss_mb() {
 #ifdef _WIN32
@@ -259,4 +259,4 @@ int run_benchmark(const BenchmarkOptions& options) {
     return 0;
 }
 
-}  // namespace ccn2
+}  // namespace ccbench

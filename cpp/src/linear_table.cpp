@@ -4,7 +4,7 @@
 #include <cmath>
 #include <unordered_map>
 
-namespace ccn2 {
+namespace ccbench {
 
 namespace {
 
@@ -107,4 +107,4 @@ MiningResult linear_table_mine(const Dataset& dataset, double min_sup, double* p
     return result;
 }
 
-}  // namespace ccn2
+}  // namespace ccbench

@@ -4,8 +4,8 @@
 
 #include <filesystem>
 
-namespace ccn2 {
+namespace ccbench {
 
 Dataset load_dataset(const std::filesystem::path& file_path);
 
-}  // namespace ccn2
+}  // namespace ccbench

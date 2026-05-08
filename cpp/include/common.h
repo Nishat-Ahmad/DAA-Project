@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace ccn2 {
+namespace ccbench {
 
 using Transaction = std::vector<int>;
 using Dataset = std::vector<Transaction>;
@@ -55,4 +55,4 @@ inline void update_peak(double* peak_rss_mb) {
     *peak_rss_mb = std::max(*peak_rss_mb, current_rss_mb());
 }
 
-}  // namespace ccn2
+}  // namespace ccbench

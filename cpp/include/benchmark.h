@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace ccn2 {
+namespace ccbench {
 
 struct BenchmarkOptions {
     unsigned workers = 0;
@@ -21,4 +21,4 @@ struct BenchmarkOptions {
 BenchmarkOptions parse_arguments(int argc, char** argv);
 int run_benchmark(const BenchmarkOptions& options);
 
-}  // namespace ccn2
+}  // namespace ccbench
