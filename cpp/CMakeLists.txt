@@ -9,7 +9,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(ccn2_cpp
     src/main.cpp
     src/dataset.cpp
-    src/miners.cpp
+    src/apriori.cpp
+    src/linear_table.cpp
     src/benchmark.cpp
 )
 

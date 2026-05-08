@@ -1,8 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 # 1. Load the data
 df = pd.read_csv('results.csv')
+
+graphs_dir = Path('Graphs')
+graphs_dir.mkdir(exist_ok=True)
 
 # 2. Calculate Averages (The "Rule of Three" average)
 # We group by dataset, algorithm, and min_sup to get the mean of the 3 runs
@@ -43,7 +47,7 @@ for dataset in datasets:
     plt.grid(True, which="both", ls="-", alpha=0.5)
     
     # Save the figure for your IEEE report
-    plt.savefig(f'{dataset}_scalability_time.png')
+    plt.savefig(graphs_dir / f'{dataset}_scalability_time.png')
     plt.show()
 
 print("\nScalability curves saved as PNG files.")

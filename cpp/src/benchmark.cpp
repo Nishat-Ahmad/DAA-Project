@@ -1,13 +1,15 @@
 #include "benchmark.h"
 
+#include "apriori.h"
 #include "dataset.h"
-#include "miners.h"
+#include "linear_table.h"
 
 #include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <thread>
 #include <unordered_map>
 
