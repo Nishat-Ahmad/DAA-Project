@@ -101,7 +101,7 @@ MiningResult run_algorithm(const std::string& algorithm, const Dataset& dataset,
         return apriori_optimized(dataset, min_sup, workers, peak_rss_mb);
     }
     if (algorithm == "linear_table_sota") {
-        return linear_table_mine(dataset, min_sup, peak_rss_mb);
+        return linear_table_mine(dataset, min_sup, workers, peak_rss_mb);
     }
     throw std::runtime_error("Unknown algorithm: " + algorithm);
 }

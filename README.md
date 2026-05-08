@@ -14,7 +14,7 @@ This repository contains a frequent-itemset mining benchmark for the Design and 
 
 ## Project layout
 
-- `cpp/` - C++ implementation, build files, and benchmark CLI
+- `cpp/` - C++ implementation, build files, and benchmark CLI (`ccbench_cpp`)
 - `Dataset/` - benchmark datasets
 - `md/` - reports and submission notes
 - `results.csv` - latest benchmark output
@@ -33,14 +33,14 @@ Quick test:
 
 ```powershell
 cd D:\Code\DAAProject\cpp
-./build/Release/ccn2_cpp.exe --quick
+./build/Release/ccbench_cpp.exe --quick
 ```
 
 Full benchmark:
 
 ```powershell
 cd D:\Code\DAAProject\cpp
-./build/Release/ccn2_cpp.exe --workers 8
+./build/Release/ccbench_cpp.exe --workers 8
 ```
 
 ## Notes

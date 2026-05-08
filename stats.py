@@ -2,10 +2,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# 1. Load the data
-df = pd.read_csv('results.csv')
+# Resolve paths relative to this script, not the current working directory.
+base_dir = Path(__file__).resolve().parent
+results_path = base_dir / 'cpp' / 'results.csv'
+graphs_dir = base_dir / 'Graphs'
 
-graphs_dir = Path('Graphs')
+# 1. Load the data
+df = pd.read_csv(results_path)
+
 graphs_dir.mkdir(exist_ok=True)
 
 # 2. Calculate Averages (The "Rule of Three" average)
